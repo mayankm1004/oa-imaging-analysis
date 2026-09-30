@@ -1,0 +1,99 @@
+project:
+  name: OA Detection Research System
+  version: 0.1.0
+  study_type: knee_xray
+  disclaimer: "Research/decision-support tool. Not a medical diagnosis."
+
+model:
+  name: efficientnet_b4_oa
+  backbone: efficientnet_b4
+  num_classes: 2  # OA-related / not OA-related
+  pretrained: true
+  checkpoint: null  # path to fine-tuned checkpoint, null = ImageNet weights
+  input_size: [384, 384]
+  dropout: 0.3
+  requires_finetuning: true  # clearly marked — model must be fine-tuned before clinical use
+
+preprocessing:
+  target_size: [384, 384]
+  clahe_clip_limit: 2.0
+  clahe_tile_grid: [8, 8]
+  denoise_h: 10
+  denoise_template_window: 7
+  denoise_search_window: 21
+  sharpen_kernel_size: 3
+  min_image_size: [100, 100]
+  max_image_size: [4096, 4096]
+
+dicom:
+  default_window_center: 400
+  default_window_width: 2000
+  pii_fields:
+    - PatientName
+    - PatientID
+    - PatientBirthDate
+    - PatientSex
+    - PatientAge
+    - PatientWeight
+    - InstitutionName
+    - ReferringPhysicianName
+    - PerformingPhysicianName
+    - OperatorsName
+    - StudyID
+    - AccessionNumber
+
+training:
+  batch_size: 16
+  learning_rate: 0.0001
+  epochs: 50
+  early_stopping_patience: 10
+  warmup_epochs: 5
+  weight_decay: 1e-4
+  use_focal_loss: true
+  focal_loss_gamma: 2.0
+  random_seed: 42
+  num_workers: 4
+  val_split: 0.15
+  test_split: 0.15
+
+augmentation:
+  horizontal_flip: true
+  vertical_flip: false
+  rotation_limit: 10
+  brightness_limit: 0.2
+  contrast_limit: 0.2
+  elastic_transform: true
+
+dataset:
+  root: dataset/
+  train_dir: train
+  val_dir: validation
+  test_dir: test
+  classes:
+    - normal
+    - oa_related
+
+reports:
+  output_dir: reports/
+  include_heatmap: true
+  include_preprocessing_steps: true
+
+risk_markers:
+  joint_space_narrowing:
+    threshold_possible: 0.45
+    threshold_detected: 0.65
+  osteophytes:
+    threshold_possible: 0.40
+    threshold_detected: 0.60
+  subchondral_sclerosis:
+    threshold_possible: 0.45
+    threshold_detected: 0.65
+  bone_deformity:
+    threshold_possible: 0.40
+    threshold_detected: 0.60
+  alignment_abnormality:
+    threshold_possible: 0.35
+    threshold_detected: 0.55
+  cystic_changes:
+    threshold_possible: 0.40
+    threshold_detected: 0.60
